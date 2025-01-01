@@ -217,7 +217,7 @@ func (c Cell) Color() color.Color {
 	case CellTypeSnake:
 		return color.RGBA{34, 139, 34, 255}
 	case CellTypeFood:
-		return color.RGBA{34, 139, 34, 255}
+		return color.White
 	case CellTypeEmpty:
 		fallthrough
 	default:

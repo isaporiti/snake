@@ -90,8 +90,8 @@ func (g *game) Draw(screen *ebiten.Image) {
 
 func (g *game) Update() error {
 	g.Ticks++
-	g.HandleInput()
 	if g.Ticks >= g.TickRate {
+		g.HandleInput()
 		g.Ticks = 0
 		g.Snake.Move(g.Width, g.Height)
 		g.CheckEat()
@@ -219,6 +219,7 @@ func (g *game) HandleInput() {
 	switch g.TouchState {
 	case TouchStateNone:
 		if len(g.Touches) == 1 {
+			// Start tracking the touch when a new touch is detected
 			g.TouchId = g.Touches[0]
 			x, y := ebiten.TouchPosition(g.TouchId)
 			g.TouchInitPosX = x
@@ -227,33 +228,32 @@ func (g *game) HandleInput() {
 			g.TouchLastPosY = y
 			g.TouchState = TouchStatePressing
 		}
+
 	case TouchStatePressing:
-		if len(g.Touches) >= 2 {
-			break
-		}
 		if len(g.Touches) == 1 {
 			if g.Touches[0] != g.TouchId {
 				g.TouchState = TouchStateInvalid
 			} else {
 				x, y := ebiten.TouchPosition(g.Touches[0])
+				newDirection := g.vecToDir(
+					float64(x-g.TouchInitPosX),
+					float64(y-g.TouchInitPosY),
+				)
+				if newDirection != DirectionNone && newDirection != direction {
+					direction = newDirection
+				}
 				g.TouchLastPosX = x
 				g.TouchLastPosY = y
 			}
-			break
 		}
+
 		if len(g.Touches) == 0 {
-			direction = g.vecToDir(
-				float64(g.TouchLastPosX-g.TouchInitPosX),
-				float64(g.TouchLastPosY-g.TouchInitPosY),
-			)
-			if direction == DirectionNone {
-				g.TouchState = TouchStateNone
-				break
-			}
-			g.TouchState = TouchStateSettled
+			g.TouchState = TouchStateNone
 		}
+
 	case TouchStateSettled:
 		g.TouchState = TouchStateNone
+
 	case TouchStateInvalid:
 		if len(g.Touches) == 0 {
 			g.TouchState = TouchStateNone

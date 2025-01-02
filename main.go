@@ -45,8 +45,6 @@ type game struct {
 	TouchState    TouchState
 	TouchInitPosX int
 	TouchInitPosY int
-	TouchLastPosX int
-	TouchLastPosY int
 }
 
 type TouchState uint8
@@ -90,8 +88,8 @@ func (g *game) Draw(screen *ebiten.Image) {
 
 func (g *game) Update() error {
 	g.Ticks++
+	g.HandleInput()
 	if g.Ticks >= g.TickRate {
-		g.HandleInput()
 		g.Ticks = 0
 		g.Snake.Move(g.Width, g.Height)
 		g.CheckEat()
@@ -224,8 +222,6 @@ func (g *game) HandleInput() {
 			x, y := ebiten.TouchPosition(g.TouchId)
 			g.TouchInitPosX = x
 			g.TouchInitPosY = y
-			g.TouchLastPosX = x
-			g.TouchLastPosY = y
 			g.TouchState = TouchStatePressing
 		}
 
@@ -242,8 +238,6 @@ func (g *game) HandleInput() {
 				if newDirection != DirectionNone && newDirection != direction {
 					direction = newDirection
 				}
-				g.TouchLastPosX = x
-				g.TouchLastPosY = y
 			}
 		}
 

@@ -41,7 +41,6 @@ type game struct {
 }
 
 func NewGame(width, height int) *game {
-
 	g := &game{
 		Width:    width,
 		Height:   height,
@@ -73,7 +72,7 @@ func (g *game) Draw(screen *ebiten.Image) {
 
 func (g *game) Update() error {
 	g.Ticks++
-	g.Snake.SetDirectionOnKeyPress()
+	g.HandleInput()
 	if g.Ticks >= g.TickRate {
 		g.Ticks = 0
 		g.Snake.Move(g.Width, g.Height)
@@ -185,17 +184,19 @@ func (s *Snake) Draw(screen *ebiten.Image) {
 	}
 }
 
-func (s *Snake) SetDirectionOnKeyPress() {
+func (g *game) HandleInput() {
+	direction := g.Snake.Direction
 	switch {
-	case ebiten.IsKeyPressed(ebiten.KeyArrowUp) && s.Direction != DirectionDown:
-		s.Direction = DirectionUp
-	case ebiten.IsKeyPressed(ebiten.KeyArrowRight) && s.Direction != DirectionLeft:
-		s.Direction = DirectionRight
-	case ebiten.IsKeyPressed(ebiten.KeyArrowLeft) && s.Direction != DirectionRight:
-		s.Direction = DirectionLeft
-	case ebiten.IsKeyPressed(ebiten.KeyArrowDown) && s.Direction != DirectionUp:
-		s.Direction = DirectionDown
+	case ebiten.IsKeyPressed(ebiten.KeyArrowUp) && direction != DirectionDown:
+		direction = DirectionUp
+	case ebiten.IsKeyPressed(ebiten.KeyArrowRight) && direction != DirectionLeft:
+		direction = DirectionRight
+	case ebiten.IsKeyPressed(ebiten.KeyArrowLeft) && direction != DirectionRight:
+		direction = DirectionLeft
+	case ebiten.IsKeyPressed(ebiten.KeyArrowDown) && direction != DirectionUp:
+		direction = DirectionDown
 	}
+	g.Snake.Direction = direction
 }
 
 type Cell struct {

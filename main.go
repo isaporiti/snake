@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image/color"
 	"log"
+	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text"
@@ -16,7 +17,7 @@ const (
 	screenWidth     = 200
 	screenHeight    = 300
 	cellLength      = 10
-	tickRateInitial = 20
+	tickRateInitial = 10
 )
 
 func main() {
@@ -38,7 +39,22 @@ type game struct {
 
 	Ticks    int
 	TickRate int
+
+	Touches       []ebiten.TouchID
+	TouchId       ebiten.TouchID
+	TouchState    TouchState
+	TouchInitPosX int
+	TouchInitPosY int
 }
+
+type TouchState uint8
+
+const (
+	TouchStateNone = iota
+	TouchStatePressing
+	TouchStateSettled
+	TouchStateInvalid
+)
 
 func NewGame(width, height int) *game {
 	g := &game{
@@ -187,16 +203,83 @@ func (s *Snake) Draw(screen *ebiten.Image) {
 func (g *game) HandleInput() {
 	direction := g.Snake.Direction
 	switch {
-	case ebiten.IsKeyPressed(ebiten.KeyArrowUp) && direction != DirectionDown:
+	case ebiten.IsKeyPressed(ebiten.KeyArrowUp):
 		direction = DirectionUp
-	case ebiten.IsKeyPressed(ebiten.KeyArrowRight) && direction != DirectionLeft:
+	case ebiten.IsKeyPressed(ebiten.KeyArrowRight):
 		direction = DirectionRight
-	case ebiten.IsKeyPressed(ebiten.KeyArrowLeft) && direction != DirectionRight:
+	case ebiten.IsKeyPressed(ebiten.KeyArrowLeft):
 		direction = DirectionLeft
-	case ebiten.IsKeyPressed(ebiten.KeyArrowDown) && direction != DirectionUp:
+	case ebiten.IsKeyPressed(ebiten.KeyArrowDown):
 		direction = DirectionDown
 	}
-	g.Snake.Direction = direction
+
+	g.Touches = ebiten.AppendTouchIDs(g.Touches[:0])
+	switch g.TouchState {
+	case TouchStateNone:
+		if len(g.Touches) == 1 {
+			// Start tracking the touch when a new touch is detected
+			g.TouchId = g.Touches[0]
+			x, y := ebiten.TouchPosition(g.TouchId)
+			g.TouchInitPosX = x
+			g.TouchInitPosY = y
+			g.TouchState = TouchStatePressing
+		}
+
+	case TouchStatePressing:
+		if len(g.Touches) == 1 {
+			if g.Touches[0] != g.TouchId {
+				g.TouchState = TouchStateInvalid
+			} else {
+				x, y := ebiten.TouchPosition(g.Touches[0])
+				newDirection := g.vecToDir(
+					float64(x-g.TouchInitPosX),
+					float64(y-g.TouchInitPosY),
+				)
+				if newDirection != DirectionNone && newDirection != direction {
+					direction = newDirection
+				}
+			}
+		}
+
+		if len(g.Touches) == 0 {
+			g.TouchState = TouchStateNone
+		}
+
+	case TouchStateSettled:
+		g.TouchState = TouchStateNone
+
+	case TouchStateInvalid:
+		if len(g.Touches) == 0 {
+			g.TouchState = TouchStateNone
+		}
+	}
+
+	switch {
+	case direction == DirectionUp && g.Snake.Direction != DirectionDown:
+		fallthrough
+	case direction == DirectionDown && g.Snake.Direction != DirectionUp:
+		fallthrough
+	case direction == DirectionLeft && g.Snake.Direction != DirectionRight:
+		fallthrough
+	case direction == DirectionRight && g.Snake.Direction != DirectionLeft:
+		g.Snake.Direction = direction
+	}
+}
+
+func (g *game) vecToDir(x, y float64) Direction {
+	if math.Abs(x) < 4 && math.Abs(y) < 4 {
+		return DirectionNone
+	}
+	if math.Abs(x) < math.Abs(y) {
+		if y < 0 {
+			return DirectionUp
+		}
+		return DirectionDown
+	}
+	if x < 0 {
+		return DirectionLeft
+	}
+	return DirectionRight
 }
 
 type Cell struct {
@@ -245,7 +328,8 @@ func (c Cell) Equals(other Cell) bool {
 type Direction int
 
 const (
-	DirectionUp Direction = iota
+	DirectionNone Direction = iota
+	DirectionUp
 	DirectionDown
 	DirectionLeft
 	DirectionRight

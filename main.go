@@ -236,14 +236,21 @@ func (g *game) HandleInput() {
 				g.TouchState = TouchStateInvalid
 			} else {
 				x, y := ebiten.TouchPosition(g.Touches[0])
-				direction = g.vecToDir(
-					float64(x-g.TouchInitPosX),
-					float64(y-g.TouchInitPosY),
-				)
-
 				g.TouchLastPosX = x
 				g.TouchLastPosY = y
 			}
+			break
+		}
+		if len(g.Touches) == 0 {
+			direction = g.vecToDir(
+				float64(g.TouchLastPosX-g.TouchInitPosX),
+				float64(g.TouchLastPosY-g.TouchInitPosY),
+			)
+			if direction == DirectionNone {
+				g.TouchState = TouchStateNone
+				break
+			}
+			g.TouchState = TouchStateSettled
 		}
 	case TouchStateSettled:
 		g.TouchState = TouchStateNone

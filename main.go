@@ -41,7 +41,6 @@ type game struct {
 }
 
 func NewGame(width, height int) *game {
-
 	g := &game{
 		Width:    width,
 		Height:   height,
@@ -73,9 +72,9 @@ func (g *game) Draw(screen *ebiten.Image) {
 
 func (g *game) Update() error {
 	g.Ticks++
-	g.Snake.SetDirectionOnKeyPress()
 	if g.Ticks >= g.TickRate {
 		g.Ticks = 0
+		g.HandleInput()
 		g.Snake.Move(g.Width, g.Height)
 		g.CheckEat()
 		g.CheckGameOver()
@@ -135,7 +134,7 @@ type Snake struct {
 func NewSnake() Snake {
 	s := Snake{
 		Cells:     make([]Cell, 3),
-		Direction: Right,
+		Direction: DirectionRight,
 	}
 	for i := range s.Cells {
 		s.Cells[i] = Cell{X: 100 - i*cellLength, Y: 100, Type: CellTypeSnake}
@@ -151,16 +150,16 @@ func (s *Snake) Move(width, height int) {
 	head := s.Head()
 	newHead := Cell{Type: CellTypeSnake}
 	switch s.Direction {
-	case Up:
+	case DirectionUp:
 		newHead.X = head.X
 		newHead.Y = head.Y - cellLength
-	case Down:
+	case DirectionDown:
 		newHead.X = head.X
 		newHead.Y = head.Y + cellLength
-	case Left:
+	case DirectionLeft:
 		newHead.X = head.X - cellLength
 		newHead.Y = head.Y
-	case Right:
+	case DirectionRight:
 		newHead.X = head.X + cellLength
 		newHead.Y = head.Y
 	}
@@ -185,17 +184,19 @@ func (s *Snake) Draw(screen *ebiten.Image) {
 	}
 }
 
-func (s *Snake) SetDirectionOnKeyPress() {
+func (g *game) HandleInput() {
+	direction := g.Snake.Direction
 	switch {
-	case ebiten.IsKeyPressed(ebiten.KeyArrowUp) && s.Direction != Down:
-		s.Direction = Up
-	case ebiten.IsKeyPressed(ebiten.KeyArrowRight) && s.Direction != Left:
-		s.Direction = Right
-	case ebiten.IsKeyPressed(ebiten.KeyArrowLeft) && s.Direction != Right:
-		s.Direction = Left
-	case ebiten.IsKeyPressed(ebiten.KeyArrowDown) && s.Direction != Up:
-		s.Direction = Down
+	case ebiten.IsKeyPressed(ebiten.KeyArrowUp) && direction != DirectionDown:
+		direction = DirectionUp
+	case ebiten.IsKeyPressed(ebiten.KeyArrowRight) && direction != DirectionLeft:
+		direction = DirectionRight
+	case ebiten.IsKeyPressed(ebiten.KeyArrowLeft) && direction != DirectionRight:
+		direction = DirectionLeft
+	case ebiten.IsKeyPressed(ebiten.KeyArrowDown) && direction != DirectionUp:
+		direction = DirectionDown
 	}
+	g.Snake.Direction = direction
 }
 
 type Cell struct {
@@ -244,8 +245,8 @@ func (c Cell) Equals(other Cell) bool {
 type Direction int
 
 const (
-	Up Direction = iota
-	Down
-	Left
-	Right
+	DirectionUp Direction = iota
+	DirectionDown
+	DirectionLeft
+	DirectionRight
 )

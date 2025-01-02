@@ -17,7 +17,7 @@ const (
 	screenWidth     = 200
 	screenHeight    = 300
 	cellLength      = 10
-	tickRateInitial = 15
+	tickRateInitial = 10
 )
 
 func main() {

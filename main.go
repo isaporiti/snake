@@ -17,7 +17,7 @@ const (
 	screenWidth     = 200
 	screenHeight    = 300
 	cellLength      = 10
-	tickRateInitial = 10
+	tickRateInitial = 15
 )
 
 func main() {
@@ -203,7 +203,7 @@ func (s *Snake) Draw(screen *ebiten.Image) {
 }
 
 func (g *game) HandleInput() {
-	var direction Direction
+	direction := g.Snake.Direction
 	switch {
 	case ebiten.IsKeyPressed(ebiten.KeyArrowUp):
 		direction = DirectionUp
@@ -224,7 +224,7 @@ func (g *game) HandleInput() {
 			g.TouchInitPosX = x
 			g.TouchInitPosY = y
 			g.TouchLastPosX = x
-			g.TouchLastPosX = y
+			g.TouchLastPosY = y
 			g.TouchState = TouchStatePressing
 		}
 	case TouchStatePressing:
@@ -236,21 +236,14 @@ func (g *game) HandleInput() {
 				g.TouchState = TouchStateInvalid
 			} else {
 				x, y := ebiten.TouchPosition(g.Touches[0])
+				direction = g.vecToDir(
+					float64(x-g.TouchInitPosX),
+					float64(y-g.TouchInitPosY),
+				)
+
 				g.TouchLastPosX = x
 				g.TouchLastPosY = y
 			}
-			break
-		}
-		if len(g.Touches) == 0 {
-			direction = g.vecToDir(
-				float64(g.TouchLastPosX-g.TouchInitPosX),
-				float64(g.TouchLastPosY-g.TouchInitPosY),
-			)
-			if direction == DirectionNone {
-				g.TouchState = TouchStateNone
-				break
-			}
-			g.TouchState = TouchStateSettled
 		}
 	case TouchStateSettled:
 		g.TouchState = TouchStateNone

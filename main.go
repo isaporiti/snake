@@ -90,9 +90,9 @@ func (g *game) Draw(screen *ebiten.Image) {
 
 func (g *game) Update() error {
 	g.Ticks++
+	g.HandleInput()
 	if g.Ticks >= g.TickRate {
 		g.Ticks = 0
-		g.HandleInput()
 		g.Snake.Move(g.Width, g.Height)
 		g.CheckEat()
 		g.CheckGameOver()

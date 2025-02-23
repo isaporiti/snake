@@ -1,5 +1,5 @@
 build:
-	env GOOS=js GOARCH=wasm go build -o snake.wasm github.com/isaporiti/snake
+	go build -o snake ./cmd/snake/main.go
 
-serve:
-	go run github.com/hajimehoshi/wasmserve@latest .
+run:
+	go run ./cmd/snake/main.go
